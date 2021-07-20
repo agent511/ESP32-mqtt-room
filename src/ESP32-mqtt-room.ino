@@ -100,15 +100,20 @@ float calculateDistance(int rssi, int txPower) {
 		txPower = txPower * -1;
 	}
 
-  const float ratio = rssi * 1.0 / txPower;
+/*  const float ratio = rssi * 1.0 / txPower;
   if (ratio < 1.0) {
       distFl = pow(ratio, 10);
   } else {
       distFl = (0.89976) * pow(ratio, 7.7095) + 0.111;
-  }
+  } */
 
+	const float numerator = (txPower - rssi);
+	const float exponent = numerator / (10 * 4);
+	distFl = pow(10, exponent);
+	//distFl = exponent;
+
+	//return distFl;
 	return round(distFl * 100) / 100;
-
 }
 
 #ifdef htuSensorTopic
@@ -321,19 +326,21 @@ bool reportDevice(BLEAdvertisedDevice advertisedDevice) {
 
 
 	//Check scanned MAC Address against a list of allowed MAC Addresses
-
-	if (allowedListCheck) {
-		bool allowedListFound = false;
-		for (uint32_t x = 0; x < allowedListNumberOfItems; x++) {
-			if (mac_address == allowedList[x]) {
-				allowedListFound = true;
+/*
+	if (allowedMacCheck) {
+		bool allowedMacFound = false;
+		//for (uint32_t x = 0; x < allowedListNumberOfItems; x++) {
+		for (uint32_t x = 0; x < allowedMac.length - 1; x++) {
+			if (mac_address == allowedMac[x]) {
+				allowedMacFound = true;
 			}
 		}
 
-		if (allowedListFound == false) {
+		if (allowedMacFound == false) {
 			return false;
 		}
 	}
+	*/
 	// --------------
 
 
@@ -344,6 +351,7 @@ bool reportDevice(BLEAdvertisedDevice advertisedDevice) {
 
 	doc["id"] = mac_address;
 	doc["uuid"] = mac_address;
+	doc["mac"] = mac_address;
 	doc["rssi"] = rssi;
 
 	if (advertisedDevice.haveName()){
@@ -453,6 +461,21 @@ bool reportDevice(BLEAdvertisedDevice advertisedDevice) {
 			// Serial.printf("no Beacon Advertised ServiceDataUUID: %d %s \n\r", advertisedDevice.getServiceDataUUID().bitSize(), advertisedDevice.getServiceDataUUID().toString().c_str());
 		 }
 		}
+
+		if (allowedListCheck) {
+			bool allowedListFound = false;
+			for (uint32_t x = 0; x < allowedListNumberOfItems; x++) {
+			//for (uint32_t x = 0; x < allowedList.length - 1; x++) {
+				if (doc["uuid"] == allowedList[x]) {
+					allowedListFound = true;
+				}
+			}
+
+			if (allowedListFound == false) {
+				return false;
+			}
+		}
+
 
 		char JSONmessageBuffer[512];
 		serializeJson(doc, JSONmessageBuffer);
@@ -600,6 +623,7 @@ void setup() {
 
   BLEDevice::init("");
   pBLEScan = BLEDevice::getScan(); //create new scan
+  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
   pBLEScan->setActiveScan(activeScan);
 	pBLEScan->setInterval(bleScanInterval);
 	pBLEScan->setWindow(bleScanWindow);
