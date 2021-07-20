@@ -21,7 +21,7 @@
 #define mqttUser "homeassistant"
 
 //Replace with your MQTT Broker password; example: #define mqttPassword "12345678"
-#define mqttPassword "${{ secrets.mqtt_pw }}"
+#define mqttPassword ${{ secrets.mqtt_pw }}
 
 //Specify the LED pin. For most dev boards, this is GPIO2
 #define LED_BUILTIN 2
